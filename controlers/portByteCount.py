@@ -3,11 +3,14 @@ import time
 
 # Configuration
 CONTROLLER_URL = "http://127.0.0.1:8080/stats/port/1"  # URL de l'API REST pour les stats du switch 1
-POLL_INTERVAL = 2  # Intervalle en secondes entre les requêtes
-PORTS_TO_MONITOR = [4, 5, 6]  # Liste des ports à surveiller
+POLL_INTERVAL = 0.5  # Intervalle en secondes entre les requêtes
+PORTS_TO_MONITOR = [4,5,6]  # Liste des ports à surveiller
+
+# Stocker les 4 dernières différences pour chaque port
+last_diffs = {port: [] for port in PORTS_TO_MONITOR}
 
 # Stocker les valeurs précédentes pour calculer les écarts
-previous_stats = {port: {"rx_bytes": 0, "tx_bytes": 0} for port in PORTS_TO_MONITOR}
+previous_stats = {port: 0 for port in PORTS_TO_MONITOR}
 
 def get_port_stats():
     try:
@@ -21,20 +24,25 @@ def get_port_stats():
             port_no = stat["port_no"]
             if port_no in PORTS_TO_MONITOR:  # Vérifier si le port est surveillé
                 rx_bytes = stat["rx_bytes"]
-                tx_bytes = stat["tx_bytes"]
 
-                # Calculer les écarts
-                prev_rx = previous_stats[port_no]["rx_bytes"]
-                prev_tx = previous_stats[port_no]["tx_bytes"]
+                # Calculer la différence avec la valeur précédente
+                prev_rx = previous_stats[port_no]
                 rx_diff = rx_bytes - prev_rx
-                tx_diff = tx_bytes - prev_tx
 
-                # Afficher les écarts
-                print(f"Port {port_no} - Rx Diff: {rx_diff}, Tx Diff: {tx_diff}")
+                # Ajouter la différence aux dernières valeurs
+                last_diffs[port_no].append(rx_diff)
 
-                # Mettre à jour les valeurs précédentes
-                previous_stats[port_no]["rx_bytes"] = rx_bytes
-                previous_stats[port_no]["tx_bytes"] = tx_bytes
+                # Garder uniquement les 4 dernières valeurs
+                if len(last_diffs[port_no]) > 4:
+                    last_diffs[port_no].pop(0)
+
+                # Calculer la moyenne des 4 dernières différences
+                if len(last_diffs[port_no]) == 4:
+                    avg_diff = sum(last_diffs[port_no]) / 4
+                    print(f"Port {port_no} - Moyenne des dernières différences RX: {avg_diff:.2f} bytes")
+
+                # Mettre à jour la valeur précédente
+                previous_stats[port_no] = rx_bytes
 
     except requests.exceptions.RequestException as e:
         print(f"Erreur lors de la requête : {e}")
@@ -47,3 +55,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

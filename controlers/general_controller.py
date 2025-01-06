@@ -1,49 +1,50 @@
-import requests
 import time
+from monitor import start_monitoring_in_background, exceeded_ports, below_threshold_ports
+import threading
 
-# Configuration
-CONTROLLER_URL = "http://127.0.0.1:8080/stats/port/1"  # URL de l'API REST pour les stats du switch 1
-POLL_INTERVAL = 2  # Intervalle en secondes entre les requêtes
-PORTS_TO_MONITOR = [4, 5, 6]  # Liste des ports à surveiller
+def process_alerts(event):
+    """
+    Fonction pour traiter les alertes de dépassement du seuil et de retour sous le seuil.
+    """
+    while True:
+        # Attendre qu'un événement soit déclenché
+        event.wait()
 
-# Stocker les valeurs précédentes pour calculer les écarts
-previous_stats = {port: {"rx_bytes": 0, "tx_bytes": 0} for port in PORTS_TO_MONITOR}
+        # Vérifier les ports qui ont dépassé le seuil
+        if exceeded_ports:
+            for port_no, avg_diff in exceeded_ports.items():
+                print(f"ALERT: Port {port_no} exceeded the threshold with an average RX difference of {avg_diff:.2f} bytes.")
 
-def get_port_stats():
-    try:
-        # Envoyer une requête GET pour obtenir les stats des ports
-        response = requests.get(CONTROLLER_URL)
-        response.raise_for_status()  # Lève une exception pour les erreurs HTTP
-        stats = response.json()  # Convertir la réponse en JSON
+        # Vérifier les ports qui sont revenus sous le seuil
+        if below_threshold_ports:
+            for port_no, avg_diff in below_threshold_ports.items():
+                print(f"ALERT: Port {port_no} is back below the threshold with an average RX difference of {avg_diff:.2f} bytes.")
 
-        # Extraire les informations des ports spécifiques
-        for stat in stats.get("1", []):  # "1" correspond à l'ID du switch
-            port_no = stat["port_no"]
-            if port_no in PORTS_TO_MONITOR:  # Vérifier si le port est surveillé
-                rx_bytes = stat["rx_bytes"]
-                tx_bytes = stat["tx_bytes"]
+        # Réinitialiser les dictionnaires après traitement
+        exceeded_ports.clear()
+        below_threshold_ports.clear()
 
-                # Calculer les écarts
-                prev_rx = previous_stats[port_no]["rx_bytes"]
-                prev_tx = previous_stats[port_no]["tx_bytes"]
-                rx_diff = rx_bytes - prev_rx
-                tx_diff = tx_bytes - prev_tx
-
-                # Afficher les écarts
-                print(f"Port {port_no} - Rx Diff: {rx_diff}, Tx Diff: {tx_diff}")
-
-                # Mettre à jour les valeurs précédentes
-                previous_stats[port_no]["rx_bytes"] = rx_bytes
-                previous_stats[port_no]["tx_bytes"] = tx_bytes
-
-    except requests.exceptions.RequestException as e:
-        print(f"Erreur lors de la requête : {e}")
+        # Réinitialiser l'événement après traitement
+        event.clear()
 
 def main():
-    print("Démarrage du contrôleur général...")
+    CONTROLLER_URL = "http://127.0.0.1:8080/stats/port/1"
+    PORTS_TO_MONITOR = [4]  
+    THRESHOLD = 250  
+    VERBOSE = True
+    
+    # Créer un objet Event pour communiquer entre threads
+    event = threading.Event()
+
+    # Démarrer la surveillance en arrière-plan 
+    start_monitoring_in_background(CONTROLLER_URL, PORTS_TO_MONITOR, threshold=THRESHOLD, verbose=VERBOSE, event=event)
+
+    # Démarrer un thread pour écouter les alertes
+    threading.Thread(target=process_alerts, args=(event,), daemon=True).start()
+
+    # Boucle principale qui peut effectuer d'autres actions
     while True:
-        get_port_stats()
-        time.sleep(POLL_INTERVAL)
+        time.sleep(1)
 
 if __name__ == "__main__":
     main()
