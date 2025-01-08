@@ -34,11 +34,11 @@ def create_topology():
     rapi1.start()
 
     # Ajout des switchs
-    s1 = net.addSwitch('s1')
-    s2 = net.addSwitch('s2')
-    sf1 = net.addSwitch('sf1')
-    sf2 = net.addSwitch('sf2')
-    sf3 = net.addSwitch('sf3')
+    s1 = net.addSwitch('s1', dpid='0000000000000001')
+    s2 = net.addSwitch('s2', dpid='0000000000000002')
+    sf1 = net.addSwitch('sf1', dpid='0000000000000003')
+    sf2 = net.addSwitch('sf2', dpid='0000000000000004')
+    sf3 = net.addSwitch('sf3', dpid='0000000000000005')
 
     # Ajout du serveur 
     srv = net.addDocker('srv', ip='10.0.0.50/24', dimage='host:server',dcmd="node server.js --local_ip '10.0.0.50' --local_port 8080 --local_name 'srv'")
@@ -52,7 +52,7 @@ def create_topology():
     gf3 = net.addDocker('gf3', ip='10.0.0.30/24', dimage='host:gateway',dcmd="node gateway.js --local_ip '10.0.0.30' --local_port 8282 --local_name 'gf3' --remote_ip '10.0.0.40' --remote_port 8281  --remote_name 'gi'")  
 
      # Ajout des hôtes finales, ce sont les réseaux de capteurs
-    dev1 = net.addDocker('dev1', ip='10.0.0.11/24', dimage='host:device',dcmd="node device.js --local_ip '10.0.0.11' --local_port 9001 --local_name 'dev1' --remote_ip '10.0.0.10' --remote_port 8282 --remote_name 'gf1' --send_period 2000")
+    dev1 = net.addDocker('dev1', ip='10.0.0.11/24', dimage='host:highdevice',dcmd="node device2.js --local_ip '10.0.0.11' --local_port 9001 --local_name 'dev1' --remote_ip '10.0.0.10' --remote_port 8282 --remote_name 'gf1' --normal_period 10000 --high_period 10000 --send_period 2000")
     dev2 = net.addDocker('dev2', ip='10.0.0.21/24', dimage='host:device',dcmd="node device.js --local_ip '10.0.0.21' --local_port 9001  --local_name 'dev2' --remote_ip '10.0.0.20' --remote_port 8282 --remote_name 'gf2' --send_period 2000")
     dev3 = net.addDocker('dev3', ip='10.0.0.31/24', dimage='host:device',dcmd="node device.js --local_ip '10.0.0.31' --local_port 9001  --local_name 'dev3' --remote_ip '10.0.0.30' --remote_port 8282 --remote_name 'gf3' --send_period 2000")  
 
