@@ -1,3 +1,17 @@
+
+# ---------------------------------------------------------------------------
+# Description :
+# Ce script permet de suivre les quantités de données transmises sur des 
+# ports spécifiques d'un switch SDN en interrogeant deux API du contrôleur SDN.
+# Il récupère les statistiques des ports et des flux, calcule les écarts de 
+# données et affiche les volumes échangés. Il est conçu pour aider à la gestion 
+# des seuils de données.
+#
+# Entrées modifiables :
+# - POLL_INTERVAL : Intervalle (en secondes) entre les requêtes
+# - PORTS_TO_MONITOR : Liste des ports à surveiller (numéros de port)
+# ---------------------------------------------------------------------------
+
 import requests
 import time
 
