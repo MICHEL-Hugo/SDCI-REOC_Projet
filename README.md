@@ -1,10 +1,23 @@
-# Project README
+# Software Defined Network & Virtual Network Function: Monitoring and Adaptation
 
-## Overview
-This project describes the topology of a network by creating gateways that simulates the data received by sensor networks. Then it is monitored and create a solution to adress the problem of sudden increase in data traffic load of one of the node.
+## Overview  
+This project outlines the topology of a basic IoT network by simulating devices that act as sensors, sending data to gateways. The gateways then transit the data to an application server.  
+
+The primary aim of this project is to explore **Software-Defined Networking (SDN)** and **Virtual Network Functions (VNF)** by implementing two main functionalities:  
+
+1. **Overload Detection**  
+   - Monitors traffic to identify and respond to congestion on network nodes.  
+
+2. **Regulation Mechanism**  
+   - Implements a dynamic solution to redistribute traffic when overloads are detected.  
+
+Follow the steps below to set up the network topology and implement the specified functionalities:  
+
 ---
 
 ## Docker Images
+Docker images are stored in the [dockers](https://github.com/MICHEL-Hugo/SDCI-REOC_Projet/tree/main/dockers) file.
+Use the following functions to build the necessary Docker images for the project.
 
 ### 1. `host`
 
@@ -27,13 +40,8 @@ docker build -f vnfGateway.Dockerfile -t vnf:gateway .
 
 ---
 
-## Building the Docker Images
-Use the above functions to build the necessary Docker images for the project.
-
----
-
 ## Running the Topology
-After building the Docker images, run the `topology.py` script to create and start the network topology.
+After building the Docker images, run the `topology.py` script in the [topologies](https://github.com/MICHEL-Hugo/SDCI-REOC_Projet/tree/main/topologies) folder to create and start the network topology.
 
 ### Script Overview
 The `topology.py` script uses the following modules and methods to create the network:
@@ -76,4 +84,36 @@ python3 generalController.py
 Ensure the required Python dependencies are installed and the Docker containers are active.
 
 ---
+### Network Evolution Overview  
+This project allows you to observe the evolution of the network.  
+
+- **Device 1 in the topology** runs a unique service that alternates between two phases:  
+  1. **High data sending**  
+  2. **Regular data sending**  
+
+You can modify the duration of these phases in the [topology.py](https://github.com/MICHEL-Hugo/SDCI-REOC_Projet/blob/main/topologies/topology.py) file.  
+
+### Observing the Topology  
+You can monitor the topology using the following commands:  
+
+#### Containernet Commands  
+- **Display nodes and links**:  
+  ```bash
+  nodes
+  links
+  ```  
+
+#### Ryu Controller Commands  
+- **List switches**:  
+  ```bash
+  curl -X GET http://localhost:8080/stats/switches
+  ```  
+- **Flow statistics for switch 1**:  
+  ```bash
+  curl -X GET http://localhost:8080/stats/flow/1
+  ```  
+- **Switch description for switch 1**:  
+  ```bash
+  curl -X GET http://localhost:8080/stats/desc/1
+  ```  
 
